@@ -1,0 +1,1 @@
+# Machine-Learning-Driven-IoT-System-for-Assisting-Less-Able-Bodied-Individuals
