@@ -5,3 +5,4 @@ __pycache__/
 *.tflite
 data/
 training/datasets/
+training/misclassified/
