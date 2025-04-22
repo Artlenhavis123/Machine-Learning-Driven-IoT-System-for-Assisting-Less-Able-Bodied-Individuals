@@ -99,7 +99,7 @@ model = models.Sequential([
     layers.Flatten(),
     layers.Dense(64, activation='relu'),
     layers.Dropout(0.5),
-    layers.Dense(2, activation='softmax')
+    layers.Dense(3, activation='softmax')
 ])
 
 plot_model(model, to_file=f"models/cnn_architecture_{timestamp}.png", show_shapes=True, dpi=120)
