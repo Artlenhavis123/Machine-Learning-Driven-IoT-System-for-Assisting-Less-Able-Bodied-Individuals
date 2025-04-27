@@ -1,6 +1,8 @@
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras import layers, models
+from tensorflow.keras.applications import MobileNetV2
+from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import plot_model
 import os
 import matplotlib.pyplot as plt
@@ -43,11 +45,12 @@ batch_size = 32
 # Data generators
 train_datagen = ImageDataGenerator(
     rescale=1./255,
-    rotation_range=15,
-    width_shift_range=0.1,
-    height_shift_range=0.1,
-    zoom_range=0.1,
-    brightness_range=[0.8, 1.2],
+    rotation_range=30,
+    width_shift_range=0.2,
+    height_shift_range=0.2,
+    shear_range=0.2,
+    zoom_range=[0.8, 1.2],
+    brightness_range=[0.7, 1.3],
     horizontal_flip=True
 )
 val_test_datagen = ImageDataGenerator(rescale=1./255)
@@ -75,7 +78,7 @@ test_data = val_test_datagen.flow_from_directory(
 )
 
 # Class distribution
-print("🔍 Class Distribution in Training Data:")
+print("\U0001F50D Class Distribution in Training Data:")
 print(Counter(train_data.classes))
 
 # Class weights
@@ -85,31 +88,34 @@ class_weights = compute_class_weight(
     y=train_data.classes
 )
 class_weight_dict = dict(enumerate(class_weights))
-print("🧮 Computed Class Weights:", class_weight_dict)
+print("\U0001F9AE Computed Class Weights:", class_weight_dict)
 
-# CNN architecture
+# Load MobileNetV2 base model
+base_model = MobileNetV2(
+    weights='imagenet',
+    include_top=False,
+    input_shape=(img_height, img_width, 3)
+)
+base_model.trainable = False
+
+# Add custom top layers
 model = models.Sequential([
-    layers.Input(shape=(img_height, img_width, 3)),
-    layers.Conv2D(32, (3, 3), activation='relu'),
-    layers.MaxPooling2D(2, 2),
-    layers.Dropout(0.25),
-    layers.Conv2D(64, (3, 3), activation='relu'),
-    layers.MaxPooling2D(2, 2),
-    layers.Dropout(0.25),
-    layers.Flatten(),
-    layers.Dense(64, activation='relu'),
+    base_model,
+    layers.GlobalAveragePooling2D(),
+    layers.Dropout(0.3),
+    layers.Dense(128, activation='relu'),
     layers.Dropout(0.5),
-    layers.Dense(5, activation='softmax')
+    layers.Dense(train_data.num_classes, activation='softmax')
 ])
 
 plot_model(model, to_file=f"models/cnn_architecture_{timestamp}.png", show_shapes=True, dpi=120)
-model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+model.compile(optimizer=Adam(learning_rate=1e-4), loss='categorical_crossentropy', metrics=['accuracy'])
 model.summary()
 
 # Callbacks
 early_stop = tf.keras.callbacks.EarlyStopping(
     monitor='val_loss',
-    patience=5,
+    patience=8,
     restore_best_weights=True
 )
 
@@ -117,7 +123,7 @@ early_stop = tf.keras.callbacks.EarlyStopping(
 history = model.fit(
     train_data,
     validation_data=val_data,
-    epochs=30,
+    epochs=50,
     callbacks=[early_stop],
     class_weight=class_weight_dict
 )
@@ -151,7 +157,7 @@ plot_training_curves(history)
 
 # Evaluation
 test_loss, test_acc = model.evaluate(test_data)
-print(f"🧪 Test accuracy: {test_acc:.4f}, Test loss: {test_loss:.4f}")
+print(f"\U0001F9EA Test accuracy: {test_acc:.4f}, Test loss: {test_loss:.4f}")
 
 # Predictions
 y_pred = model.predict(test_data)
@@ -161,11 +167,11 @@ class_labels = list(test_data.class_indices.keys())
 
 # Report
 report = classification_report(y_true, y_pred_classes, target_names=class_labels)
-print("\n📄 Classification Report:\n", report)
+print("\n\U0001F4C4 Classification Report:\n", report)
 
 # Confusion matrix
 cm = confusion_matrix(y_true, y_pred_classes)
-print("\n🔢 Confusion Matrix:")
+print("\n\U0001F522 Confusion Matrix:")
 print(cm)
 
 plt.figure(figsize=(6, 5))
