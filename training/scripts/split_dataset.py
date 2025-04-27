@@ -7,7 +7,7 @@ from collections import defaultdict
 # Config
 SOURCE_DIR = Path("datasets/frames")
 DEST_DIR = Path("datasets/split_frames")
-CLASS_NAMES = ["Fall", "No_Fall", "Pre_Fall"]
+CLASS_NAMES = ["Fall", "Idle", "Pre_Fall", "Sitting", "Lying"]
 SPLIT_RATIOS = {"train": 0.7, "val": 0.15, "test": 0.15}
 SEED = 42
 random.seed(SEED)
