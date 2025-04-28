@@ -6,3 +6,4 @@ __pycache__/
 data/
 training/datasets/
 training/misclassified/
+training/models/**/fall_model.h5
