@@ -11,8 +11,11 @@ class TFLiteModel:
     def predict(self, input_data):
         self.interpreter.set_tensor(self.input_details[0]['index'], input_data)
         self.interpreter.invoke()
-        output_data = self.interpreter.get_tensor(self.output_details[0]['index'])
-        prediction = np.argmax(output_data)
-        confidence = np.max(output_data)
-        return prediction, confidence
+        output = self.interpreter.get_tensor(self.output_details[0]['index'])
+
+        predicted_index = int(np.argmax(output[0]))
+        confidence = float(np.max(output[0]))
+        
+        return predicted_index, confidence, output  # include the full probabilities
+
 

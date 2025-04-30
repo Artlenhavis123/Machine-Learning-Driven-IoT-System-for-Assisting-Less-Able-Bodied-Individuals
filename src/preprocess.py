@@ -6,4 +6,5 @@ def preprocess_frame(frame):
     frame = cv2.resize(frame, (img_width, img_height))
     frame = frame.astype(np.float32) / 255.0
     frame = np.expand_dims(frame, axis=0)
+
     return frame

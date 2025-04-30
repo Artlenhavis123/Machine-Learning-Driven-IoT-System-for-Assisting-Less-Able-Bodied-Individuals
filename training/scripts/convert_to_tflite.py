@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 # Load your Keras model
-model = tf.keras.models.load_model('models/2025-04-27_23-35-44/fall_model.h5')
+model = tf.keras.models.load_model('models/2025-04-29_20-50-18/fall_model.h5')
 
 # Convert to TensorFlow Lite format
 converter = tf.lite.TFLiteConverter.from_keras_model(model)
