@@ -20,7 +20,7 @@ output_dir = os.path.join("models", timestamp)
 os.makedirs(output_dir, exist_ok=True)
 log_file_path = os.path.join(output_dir, "results.txt")
 
-# Log to file and console simultaneously
+# Log to file and console
 class Logger(object):
     def __init__(self, filename):
         self.terminal = sys.stdout
@@ -90,15 +90,10 @@ class_weights = compute_class_weight(
 class_weight_dict = dict(enumerate(class_weights))
 print("\U0001F9AE Computed Class Weights:", class_weight_dict)
 
-# Load MobileNetV2 base model
-base_model = MobileNetV2(
-    weights='imagenet',
-    include_top=False,
-    input_shape=(img_height, img_width, 3)
-)
+# Load base model
+base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(img_height, img_width, 3))
 base_model.trainable = False
 
-# Add custom top layers
 model = models.Sequential([
     base_model,
     layers.GlobalAveragePooling2D(),
@@ -108,19 +103,34 @@ model = models.Sequential([
     layers.Dense(train_data.num_classes, activation='softmax')
 ])
 
-plot_model(model, to_file=f"models/cnn_architecture_{timestamp}.png", show_shapes=True, dpi=120)
-model.compile(optimizer=Adam(learning_rate=1e-4), loss='categorical_crossentropy', metrics=['accuracy'])
+plot_model(model, to_file=os.path.join(output_dir, f"cnn_architecture_{timestamp}.png"), show_shapes=True, dpi=120)
+
+# Compile model with label smoothing
+loss_fn = tf.keras.losses.CategoricalCrossentropy(label_smoothing=0.1)
+model.compile(optimizer=Adam(learning_rate=1e-4), loss=loss_fn, metrics=['accuracy'])
 model.summary()
 
 # Callbacks
-early_stop = tf.keras.callbacks.EarlyStopping(
-    monitor='val_loss',
-    patience=8,
-    restore_best_weights=True
+early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=8, restore_best_weights=True)
+
+# Train head
+history = model.fit(
+    train_data,
+    validation_data=val_data,
+    epochs=15,
+    callbacks=[early_stop],
+    class_weight=class_weight_dict
 )
 
-# Train
-history = model.fit(
+# Fine-tune base model
+base_model.trainable = True
+fine_tune_at = 100
+for layer in base_model.layers[:fine_tune_at]:
+    layer.trainable = False
+
+model.compile(optimizer=Adam(learning_rate=1e-5), loss=loss_fn, metrics=['accuracy'])
+
+fine_tune_history = model.fit(
     train_data,
     validation_data=val_data,
     epochs=50,
@@ -128,12 +138,21 @@ history = model.fit(
     class_weight=class_weight_dict
 )
 
-# Training plots
+# Merge histories
+def combine_histories(h1, h2):
+    combined = {}
+    for k in h1.history:
+        combined[k] = h1.history[k] + h2.history[k]
+    return combined
+
+combined_history = combine_histories(history, fine_tune_history)
+
+# Plot training curves
 def plot_training_curves(history):
-    acc = history.history['accuracy']
-    val_acc = history.history['val_accuracy']
-    loss = history.history['loss']
-    val_loss = history.history['val_loss']
+    acc = history['accuracy']
+    val_acc = history['val_accuracy']
+    loss = history['loss']
+    val_loss = history['val_loss']
     epochs_range = range(len(acc))
 
     plt.figure(figsize=(12, 5))
@@ -153,9 +172,9 @@ def plot_training_curves(history):
     plt.savefig(os.path.join(output_dir, "training_curves.png"))
     plt.close()
 
-plot_training_curves(history)
+plot_training_curves(combined_history)
 
-# Evaluation
+# Evaluate
 test_loss, test_acc = model.evaluate(test_data)
 print(f"\U0001F9EA Test accuracy: {test_acc:.4f}, Test loss: {test_loss:.4f}")
 
@@ -165,11 +184,9 @@ y_true = test_data.classes
 y_pred_classes = np.argmax(y_pred, axis=1)
 class_labels = list(test_data.class_indices.keys())
 
-# Report
 report = classification_report(y_true, y_pred_classes, target_names=class_labels)
 print("\n\U0001F4C4 Classification Report:\n", report)
 
-# Confusion matrix
 cm = confusion_matrix(y_true, y_pred_classes)
 print("\n\U0001F522 Confusion Matrix:")
 print(cm)
