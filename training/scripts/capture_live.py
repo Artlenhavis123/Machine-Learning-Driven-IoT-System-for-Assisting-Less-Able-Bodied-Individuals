@@ -7,10 +7,7 @@ import numpy as np
 LABELS = ["Idle", "Fall", "Lying", "Pre_Fall", "Sitting"]
 SAVE_DIR = "datasets/frames/"
 camera_sources = [
-    0,
-    1,
-    # 'rtsp://Lg9toiM7PDR2ge3M:Ld2zQOIY8wCxG4FX@192.168.0.81/live0',
-    'http://192.168.0.120:8080/video'
+    # List Camera sources here
 ]
 
 # Create label folders
@@ -18,7 +15,7 @@ for label in LABELS:
     label_dir = os.path.join(SAVE_DIR, label)
     os.makedirs(label_dir, exist_ok=True)
 
-# Initialize cameras
+# Initialise cameras
 caps = [cv2.VideoCapture(src) for src in camera_sources]
 
 # FPS tracking per camera
