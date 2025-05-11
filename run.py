@@ -20,7 +20,7 @@ CONFIDENCE_THRESHOLD = 0.3
 BUFFER_SIZE = 15
 FALL_TRIGGER_COUNT = 3
 PRE_FALL_TRIGGER_COUNT = 3
-INFER_EVERY_N_FRAMES = 5
+INFER_EVERY_N_FRAMES = 6
 
 # Model and buffer
 model = TFLiteModel(MODEL_PATH)
@@ -30,8 +30,8 @@ prediction_buffer = deque(maxlen=BUFFER_SIZE)
 cap = cv2.VideoCapture(0)
 if not cap.isOpened():
     raise IOError("Cannot open webcam")
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 160)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 120)
 
 # UI setup
 root = tk.Tk()
