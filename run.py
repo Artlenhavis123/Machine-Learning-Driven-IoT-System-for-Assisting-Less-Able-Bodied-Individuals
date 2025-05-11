@@ -115,7 +115,7 @@ def show_video():
             fall_count = prediction_buffer.count("Fall")
 
             if pre_fall_count >= PRE_FALL_TRIGGER_COUNT and fall_count >= FALL_TRIGGER_COUNT:
-                status_text.set("🚨 Fall Detected")
+                status_text.set("[ALERT] Fall Detected")
                 status_display.config(foreground="red")
                 canvas.config(bg="red")
                 trigger_alert()
